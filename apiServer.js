@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const db = require("./db/conn.js");
 const app = express();
-
 app.use(express.static("public"));
 
 app.get("/api/favorites", (_, res) => {

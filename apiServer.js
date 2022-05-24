@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const db = require("./db/conn.js");
 const app = express();
+app.use(express.json());
 app.use(express.static("public"));
 
 
@@ -10,6 +11,47 @@ app.post("/newuser", async (req, res) => {
     try {
         db.query('INSERT INTO Users (user_name, password, email) VALUES ($1,$2,$3);', [req.body.user_name, req.body.password, req.body.email]);        
         res.json(req.body);
+    } catch (error) {
+        res.json(error);
+    }
+});
+
+app.post("/user", async (req, res) => {
+    try {        
+        const userData = await db.query('SELECT user_name, user_id FROM Users WHERE user_name = $1 AND password = $2;', [req.body.name, req.body.password])
+        const userFavorites = await db.query('SELECT Meals.meal_id Meals.name, Meals.image_url, Meals.ingredient_list, Meals.instructions FROM Meals INNER JOIN top_ten ON top_ten.meal_id=Meals.meal_id AND user_id = $1;', [userData.rows[0].user_id]);
+        //console.log(`[...userFavorites.rows]= ${userFavorites.rows[0].name}`);
+        //console.log(`userData.rows[0].user_name=${userData.rows[0].user_name} and userData.rows[0].user_id=${userData.rows[0].user_id}`);
+        if(userData.rows.length !== 0){
+            const favArray = [];
+            for (let i = 0; i < userFavorites.rows.length; i++){
+                favArray.push({
+                    meal_id: `${userFavorites.rows[0].meal_id}`,
+                    name: `${userFavorites.rows[0].name}`,
+                    image_url: `${userFavorites.rows[0].image_url}`,
+                    ingredient_list: `${userFavorites.rows[0].ingredient_list}`,
+                    instructions:`${userFavorites.rows[0].instructions}`,
+            });
+            }
+            const user = {
+                name: `${userData.rows[0].user_name}`,
+                validated: true,
+                favorites: `${[...userFavorites.rows]}`
+            }
+            res.json(user);
+        }else{
+            res.json({validated: false})
+        }
+    } catch (error) {
+        console.log(error);
+        res.json(error);
+    }
+});
+
+app.get("/users", async (req, res) => {
+    try {
+        const data = await db.query('SELECT * FROM Users;');
+        res.json(data.rows);                
     } catch (error) {
         res.json(error);
     }
@@ -24,6 +66,7 @@ app.get("/favorites", async (req, res) => {
         res.json(error)
     }
 });
+
 
 //read: get recipes by user entered keyword
 app.get("/search/:keyword", async (req, res) => {

@@ -6,7 +6,7 @@ const server = "http://localhost:3000";
 function loadFrontPage() {
     const $mainDiv = $("#mainDiv");
     $mainDiv.empty();
-    //console.log($mainDiv);
+    //build HTML for front page content
     const $frontPageContent = $(`
         <div class="centerDiv"><H1>Welcome to Meal MVP</H1></div>
         <div class="roundedContainer">
@@ -26,11 +26,11 @@ async function loadRecipePage() {
     let $username = $('#username');
     let $password = $('#pword');
     const user = await checkUser($username.val(), $password.val())//returns user object with validated boolean key value pair
-    console.log(user);
+    //console.log(user);
     if (user.validated) {
         const $mainDiv = $("#mainDiv");
         $mainDiv.empty();
-        //console.log($mainDiv);
+        //build HTML for top of recipe/search page
         const $recipePageContent = $(`
             <div class="centerDiv"><H3>${user.name}'s favorite Meals</H3></div>
             <div class="roundedContainer">
@@ -39,11 +39,15 @@ async function loadRecipePage() {
         `);
         $recipePageContent.appendTo($mainDiv);
         $("#search").click(loadSearchResults);
+        
+        //builds the list of recipes that the user has added as favorites and appends to main div
         const favorites = user.favorites;//array of users favorite recipes, each recipe stored as an object
+        console.log(user.favorites)
         for (let i = 0; i < favorites.length; i++) {
+            console.log(favorites[i]);
             let currentFavorite = favorites[i];//get current favorite recipe object
             const $appendDiv = $(`
-            <div class="roundedContainer" id="${currentFavorite.meal_id}">
+            <div class="leftroundedContainer" id="${currentFavorite.meal_id}">
             <div><img src="${currentFavorite.image_url}"><h5>${currentFavorite.name}</h5></div>
             </div>`);
             $appendDiv.appendTo($mainDiv);//append rounded container div with recipe info to the main div
@@ -64,21 +68,11 @@ async function checkUser(n, p) {
         body: JSON.stringify({ name: `${n}`, password: `${p}`})
     });
     const retUser = await response.json();
-    //console.log(data);
+    //console.log(`retUser=${retUser.name}`);
+    //console.log(`response=${response}`);
     return retUser;
 }
-// console.log(server)
-    // $.post(`${server}/user`,
-    // { name: `${n}`, password: `${p}`})
-    // .done(function (data) {
-    //     console.log("User Created: " + data);
-    // });
-    //test data (no db)
-    // return {
-    //     name: "testUser",
-    //     validated: true,
-    //     favorites: []
-    // }
+
 
 //called when user clicks search button
 function loadSearchResults() {

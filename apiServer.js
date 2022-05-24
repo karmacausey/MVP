@@ -19,28 +19,32 @@ app.post("/newuser", async (req, res) => {
 app.post("/user", async (req, res) => {
     try {        
         const userData = await db.query('SELECT user_name, user_id FROM Users WHERE user_name = $1 AND password = $2;', [req.body.name, req.body.password])
-        const userFavorites = await db.query('SELECT Meals.meal_id Meals.name, Meals.image_url, Meals.ingredient_list, Meals.instructions FROM Meals INNER JOIN top_ten ON top_ten.meal_id=Meals.meal_id AND user_id = $1;', [userData.rows[0].user_id]);
-        //console.log(`[...userFavorites.rows]= ${userFavorites.rows[0].name}`);
+        const userFavorites = await db.query('SELECT Meals.meal_id, Meals.name, Meals.image_url, Meals.ingredient_list, Meals.instructions FROM Meals INNER JOIN top_ten ON top_ten.meal_id=Meals.meal_id AND user_id = $1;', [userData.rows[0].user_id]);
+        //console.log(`userFavorites.rows[0].name= ${userFavorites.rows[0].name}`);
         //console.log(`userData.rows[0].user_name=${userData.rows[0].user_name} and userData.rows[0].user_id=${userData.rows[0].user_id}`);
+        console.log(userFavorites.rows.length)
         if(userData.rows.length !== 0){
             const favArray = [];
             for (let i = 0; i < userFavorites.rows.length; i++){
-                favArray.push({
-                    meal_id: `${userFavorites.rows[0].meal_id}`,
-                    name: `${userFavorites.rows[0].name}`,
-                    image_url: `${userFavorites.rows[0].image_url}`,
-                    ingredient_list: `${userFavorites.rows[0].ingredient_list}`,
-                    instructions:`${userFavorites.rows[0].instructions}`,
-            });
+                const currentFav = {
+                    meal_id: `${userFavorites.rows[i].meal_id}`,
+                    name: `${userFavorites.rows[i].name}`,
+                    image_url: `${userFavorites.rows[i].image_url}`,
+                    ingredient_list: `${userFavorites.rows[i].ingredient_list}`,
+                    instructions:`${userFavorites.rows[i].instructions}`,
+                }
+                favArray[i]= currentFav;
             }
+            console.log(favArray);
             const user = {
                 name: `${userData.rows[0].user_name}`,
                 validated: true,
-                favorites: `${[...userFavorites.rows]}`
+                favorites: favArray
             }
+            console.log(user.favorites)
             res.json(user);
         }else{
-            res.json({validated: false})
+           res.json({validated: false})
         }
     } catch (error) {
         console.log(error);

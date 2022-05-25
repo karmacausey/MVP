@@ -111,6 +111,11 @@ app.delete("/favorite", async (req, res) => {
 
 })
 
+app.listen(process.env.PORT, () => {
+    console.log(`connecting to: ${process.env.DATABASE_URL}`);
+    console.log(`listening on Port ${process.env.PORT}`);
+});
+
 // future functionality 
 //update: reset password
 // app.patch("/password", async (req, res) => {
@@ -122,10 +127,3 @@ app.delete("/favorite", async (req, res) => {
 //     }
 
 // })
-
-
-
-app.listen(process.env.PORT, () => {
-    console.log(`connecting to: ${process.env.DATABASE_URL}`);
-    console.log(`listening on Port ${process.env.PORT}`);
-});

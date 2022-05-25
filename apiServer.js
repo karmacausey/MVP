@@ -1,50 +1,47 @@
 require("dotenv").config();
 const express = require("express");
 const db = require("./db/conn.js");
+const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
 
+
 //create: new user
 app.post("/newuser", async (req, res) => {
     try {
-        db.query('INSERT INTO Users (user_name, password, email) VALUES ($1,$2,$3);', [req.body.user_name, req.body.password, req.body.email]);        
-        res.json(req.body);
+        db.query('INSERT INTO Users (user_name, password, email) VALUES ($1,$2,$3);', [req.body.name, req.body.password, req.body.email]);
+        res.json({status: "entered"});
     } catch (error) {
         res.json(error);
     }
 });
 
 app.post("/user", async (req, res) => {
-    try {        
+    try {
         const userData = await db.query('SELECT user_name, user_id FROM Users WHERE user_name = $1 AND password = $2;', [req.body.name, req.body.password])
         const userFavorites = await db.query('SELECT Meals.meal_id, Meals.name, Meals.image_url, Meals.ingredient_list, Meals.instructions FROM Meals INNER JOIN top_ten ON top_ten.meal_id=Meals.meal_id AND user_id = $1;', [userData.rows[0].user_id]);
-        //console.log(`userFavorites.rows[0].name= ${userFavorites.rows[0].name}`);
-        //console.log(`userData.rows[0].user_name=${userData.rows[0].user_name} and userData.rows[0].user_id=${userData.rows[0].user_id}`);
-        console.log(userFavorites.rows.length)
-        if(userData.rows.length !== 0){
+        if (userData.rows.length !== 0) {
             const favArray = [];
-            for (let i = 0; i < userFavorites.rows.length; i++){
+            for (let i = 0; i < userFavorites.rows.length; i++) {
                 const currentFav = {
                     meal_id: `${userFavorites.rows[i].meal_id}`,
                     name: `${userFavorites.rows[i].name}`,
                     image_url: `${userFavorites.rows[i].image_url}`,
                     ingredient_list: `${userFavorites.rows[i].ingredient_list}`,
-                    instructions:`${userFavorites.rows[i].instructions}`,
+                    instructions: `${userFavorites.rows[i].instructions}`,
                 }
-                favArray[i]= currentFav;
+                favArray[i] = currentFav;
             }
-            console.log(favArray);
             const user = {
                 name: `${userData.rows[0].user_name}`,
                 validated: true,
                 favorites: favArray
             }
-            console.log(user.favorites)
             res.json(user);
-        }else{
-           res.json({validated: false})
+        } else {
+            res.json({ validated: false })
         }
     } catch (error) {
         console.log(error);
@@ -55,7 +52,7 @@ app.post("/user", async (req, res) => {
 app.get("/users", async (req, res) => {
     try {
         const data = await db.query('SELECT * FROM Users;');
-        res.json(data.rows);                
+        res.json(data.rows);
     } catch (error) {
         res.json(error);
     }
@@ -76,10 +73,27 @@ app.get("/favorites", async (req, res) => {
 app.get("/search/:keyword", async (req, res) => {
     try {
         //query edam api
-        $.get(`https://api.edamam.com/api/recipes/v2?type=public&q=${req.params.keyword}&app_id=e5eac9e7&app_key=%20ce3b16e9e298aa97fbc47836d7c160bf`, (data) => {
-            res.json(data.rows);
+        let response = await fetch(`https://api.edamam.com/api/recipes/v2?type=public&q=${req.params.keyword}&app_id=e5eac9e7&app_key=ce3b16e9e298aa97fbc47836d7c160bf`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
         });
+        let data = await response.json();
+        //console.log(data.hits[0].recipe.source);
+        let resultArray = [];
+        for(let i = 0; i < data.hits.length && i < 50; i++){                
+            const currentResult = {
+                image_url: `${data.hits[i].recipe.images.REGULAR.url}`,          
+                name: `${data.hits[i].recipe.label}`,
+                ingredient_list: `${data.hits[i].recipe.ingredientLines.join(',<br>')}`,
+                
+            }
+            resultArray.push(currentResult)                
+        }
+        res.json(resultArray)
     } catch (error) {
+        console.log(error)
         res.json(error);
     }
 });
@@ -97,9 +111,9 @@ app.post("/favorite", async (req, res) => {
 
 
 //update: reset password
-app.patch("/password", async (req,res) => {
+app.patch("/password", async (req, res) => {
     try {
-        db.query('UPDATE Users SET (password) = ($1) WHERE id=$2;',[req.body.password, req.body.user_id]);
+        db.query('UPDATE Users SET (password) = ($1) WHERE id=$2;', [req.body.password, req.body.user_id]);
         res.json(req.body);
     } catch (error) {
         res.json(error);
@@ -108,7 +122,7 @@ app.patch("/password", async (req,res) => {
 })
 
 //delete: delete a favorite recipe
-app.delete("/favorite", async (req,res) => {
+app.delete("/favorite", async (req, res) => {
     try {
         db.query('DELETE FROM Meals AND top_ten WHERE id=$1', [req.body.meal_id]);
         res.json(req.body);

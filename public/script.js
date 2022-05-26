@@ -1,4 +1,4 @@
-const server = "http://localhost:3000"; //https://salty-basin-23693.herokuapp.com"; //must change this value at deployment
+const server = "https://salty-basin-23693.herokuapp.com"//change based on deployment to:"http://localhost:3000"; || https://salty-basin-23693.herokuapp.com";
 let user = {};
 
 //called on index page load, or when a user logs out

@@ -6,19 +6,20 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-//create: new user
+//Create: new user
 app.post("/newuser", async (req, res) => {
     try {
         db.query('INSERT INTO Users (user_name, password, email) VALUES ($1,$2,$3);', [req.body.name, req.body.password, req.body.email]);
-        res.json({status: "entered"});
+        res.json({ status: "entered" });
     } catch (error) {
         res.json(error);
     }
 });
 
+//Read: user gets validated by database and if they have favorites they are loaded to the user object that is sent back
 app.post("/user", async (req, res) => {
     try {
-        const userData = await db.query('SELECT user_name, user_id, password FROM Users WHERE user_name = $1 AND password = $2;', [req.body.name, req.body.password])        
+        const userData = await db.query('SELECT user_name, user_id, password FROM Users WHERE user_name = $1 AND password = $2;', [req.body.name, req.body.password])
         if (userData.rows.length !== 0) {
             const userFavorites = await db.query('SELECT Meals.meal_id, Meals.name, Meals.image_url, Meals.ingredient_list, Meals.instructions FROM Meals INNER JOIN top_ten ON top_ten.meal_id=Meals.meal_id AND user_id = $1;', [userData.rows[0].user_id]);
             const favArray = [];
@@ -43,25 +44,12 @@ app.post("/user", async (req, res) => {
         } else {
             res.json({ validated: false })
         }
-    } catch (error) {        
+    } catch (error) {
         res.json(error);
     }
 });
 
-
-
-//read: get all favorites assigned to current user
-app.get("/favorites", async (req, res) => {
-    try {
-        const data = await db.query('SELECT Meals.name, Meals.image_url, Meals.ingredient_list, Meals.instructions FROM Meals INNER JOIN top_ten ON top_ten.meal_id=Meals.meal_id AND user_id = $1;', [req.body.user_id])
-        res.json(data.rows)
-    } catch (error) {
-        res.json(error)
-    }
-});
-
-
-//read: get recipes by user entered keyword
+//read: search edamam api recipes by user entered keyword
 app.get("/search/:keyword", async (req, res) => {
     try {
         //query edam api
@@ -73,14 +61,14 @@ app.get("/search/:keyword", async (req, res) => {
         });
         let data = await response.json();
         let resultArray = [];
-        for(let i = 0; i < data.hits.length && i < 50; i++){                
+        for (let i = 0; i < data.hits.length && i < 50; i++) {
             const currentResult = {
-                image_url: `${data.hits[i].recipe.images.REGULAR.url}`,          
+                image_url: `${data.hits[i].recipe.images.REGULAR.url}`,
                 name: `${data.hits[i].recipe.label}`,
                 ingredient_list: `${data.hits[i].recipe.ingredientLines.join(',<br>')}`,
-                
+
             }
-            resultArray.push(currentResult)                
+            resultArray.push(currentResult)
         }
         res.json(resultArray)
     } catch (error) {
@@ -88,7 +76,7 @@ app.get("/search/:keyword", async (req, res) => {
     }
 });
 
-//create: new favorite recipe
+//create: add a users new favorite recipe to the database
 app.post("/favorite", async (req, res) => {
     try {
         const data = await db.query('INSERT INTO Meals (name, image_url, ingredient_list, instructions) VALUES ($1,$2,$3,$4) RETURNING meal_id;', [req.body.name, req.body.image_url, req.body.ingredient_list, req.body.instructions]);
@@ -99,7 +87,7 @@ app.post("/favorite", async (req, res) => {
     }
 });
 
-//delete: delete a favorite recipe
+//delete: delete a favorite recipe from users list
 app.delete("/favorite", async (req, res) => {
     try {
         db.query('DELETE FROM Meals WHERE meal_id=$1', [req.body.meal_id]);
@@ -116,14 +104,15 @@ app.listen(process.env.PORT, () => {
     console.log(`listening on Port ${process.env.PORT}`);
 });
 
-// future functionality 
+// future functionality
 //update: reset password
-// app.patch("/password", async (req, res) => {
-//     try {
-//         db.query('UPDATE Users SET (password) = ($1) WHERE id=$2;', [req.body.password, req.body.user_id]);
-//         res.json(req.body);
-//     } catch (error) {
-//         res.json(error);
-//     }
+app.patch("/password", async (req, res) => {
+    try {
+        db.query('UPDATE Users SET password = $1 WHERE user_id=$2;', [req.body.password, req.body.user_id]);
+        res.json(req.body);
+    } catch (error) {
+        res.json(error);
+    }
 
-// })
+})
+

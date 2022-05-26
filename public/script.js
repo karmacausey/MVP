@@ -1,9 +1,8 @@
-const server = "https://salty-basin-23693.herokuapp.com"//change based on deployment to:"http://localhost:3000"; || https://salty-basin-23693.herokuapp.com";
+const server = "http://localhost:3000"//change based on deployment to:"http://localhost:3000"; || https://salty-basin-23693.herokuapp.com";
 let user = {};
 
 //called on index page load, or when a user logs out
-function loadFrontPage() {
-    user = {};
+function loadFrontPage() {    
     const $mainDiv = $("#mainDiv");
     $mainDiv.empty();
     //build HTML for front page content
@@ -17,15 +16,18 @@ function loadFrontPage() {
         `);
     $frontPageContent.appendTo($mainDiv);
     $("#login").click(loadRecipePage);
-    $("#pword").keypress(function(event){
-        if(event.key == "Enter"){
+    $("#pword").keypress(function (event) {
+        if (event.key == "Enter") {
             loadRecipePage();
-        }        
+        }
     })
     $("#nUser").click(newUserFormLoad);
 }
 loadFrontPage();//initialize login page
-
+function logout(){
+    user = {};
+    loadFrontPage();
+}
 //called when user clicks login button
 async function loadRecipePage() {
     let name = "";
@@ -46,19 +48,20 @@ async function loadRecipePage() {
     if (user.validated) {//correct username and password
         //build HTML for top of recipe/search page
         const $recipePageContent = $(`
-            <div id="logout"><button>logout</button></div>
+            <div class="leftDiv"><div id="logout"><button>logout</button></div></div><div class="rightDiv"><div id="pwordRset"><button id="reset">reset password</button></div></div>
             <div class="centerDiv"><H3>${user.name}'s favorite Meals</H3></div>
             <div class="roundedContainerNoHover">
             <div><p>Recipe Search:<input id="recipeSearch">
             <button id="search" type="button">Search</button></p></div>            
-        `);        
+        `);
         $recipePageContent.appendTo($mainDiv);//append HTML to the main div
-        $('#logout').click(loadFrontPage);//listener
+        $('#logout').click(logout);//listener
+        $('#reset').click(pwordReset);
         let $search = $("#search");
-        $('#recipeSearch').keypress(function(event){//listener for enter press
-            if(event.key == "Enter"){
+        $('#recipeSearch').keypress(function (event) {//listener for enter press
+            if (event.key == "Enter") {
                 loadSearchResults($("#recipeSearch").val());
-            }        
+            }
         })
         $search.click(function () {//listener for search button click
             loadSearchResults($("#recipeSearch").val());
@@ -101,14 +104,44 @@ async function checkUser(n, p) {
     let retUser = await response.json();
     return retUser;
 }
+//resets user password on button click
+async function pwordReset() {
+    let modal = document.getElementById("myModal");// Get the modal
+    let p = document.getElementById("modalText");//get the paragraph inside the modal
+    p.innerHTML = 'Reset your password    <input id="password"> <button id="close">OK</button>'//insert HTML in the paragraph for this message event
+    modal.style.display = "block";//open the modal
+    $('#close').click(function () {//when ok is clicked empty the modal and stop displaying
+        
+        if(passwordPatch($('#password').val())){//send the password to the function
+            p.innerHTML = 'Password reset successful!         <button id="close">OK</button>'
+            $('#close').click(function () {
+                p.innerHTML = ""
+                modal.style.display = "none";
+            });
+        }else{
+            p.innerHTML = 'ERROR: Password reset not successful         <button id="close">OK</button>'
+        }
+        
+    })
+}
 
-
+async function passwordPatch(str){
+    let response = await fetch(`${server}/password`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password: `${str}`, user_id: `${user.user_id}` })
+    });
+    let data = await response.json();
+    return true;
+}
 //called when user clicks search button
 async function loadSearchResults(str) {
     //calls to edam api through our api server loads the results into the Main Div after clearing
     const $mainDiv = $("#mainDiv");
     const $searchPageContent = $(`
-        <div id="logout"><button>logout</button></div>
+    <div class="leftDiv"><div id="logout"><button>logout</button></div></div><div class="rightDiv"><div id="pwordRset"><button id="reset">reset password</button></div></div>
         <div class="centerDiv"><H3>${user.name} search results</H3></div>
         <div class="roundedContainerNoHover">
         <div><p>Recipe Search:<input id="recipeSearch">
@@ -118,11 +151,12 @@ async function loadSearchResults(str) {
         `);
     $mainDiv.empty();//clear previous content to load fresh content
     $searchPageContent.appendTo($mainDiv);
-    $('#logout').click(loadFrontPage);//click event for logout
-    $('#recipeSearch').keypress(function(event){//search when return is pressed
-        if(event.key == "Enter"){
+    $('#logout').click(logout);//click event for logout
+    $('#reset').click(pwordReset);//click event to reset password
+    $('#recipeSearch').keypress(function (event) {//search when return is pressed
+        if (event.key == "Enter") {
             loadSearchResults($("#recipeSearch").val());
-        }        
+        }
     })
     let $favorites = $("#favorites");
     $favorites.click(function () {//click event for return to favorites button
@@ -159,7 +193,7 @@ async function getSearchData(str) {
     return data;
 }
 //prompt user yes no, save to database if yes
-async function saveFav(ev) {    
+async function saveFav(ev) {
     let meal_id = ev.currentTarget.id;
     let modal = document.getElementById("myModal");// Get the modal
     let p = document.getElementById("modalText"); //Get the paragraph for content inside the modal
@@ -168,7 +202,7 @@ async function saveFav(ev) {
     $yesBtn = $('#save');
     $noBtn = $('#close');
     $yesBtn.click(function () {//if yes button is clicked 
-        let id = ev.currentTarget.id;        
+        let id = ev.currentTarget.id;
         let nameH = document.getElementById(`${id}name`); //get recipe name tag
         let imgTag = document.getElementById(`${id}image`); //get recipe image tag
         let ingredientsP = document.getElementById(`${id}ingredient_list`); //get recipe ingredients tag
@@ -241,10 +275,10 @@ function newUserFormLoad() {
     <div><button id="userSubmit" type="button">Submit</button></div>
     <div class="spacer"></div></div>`);
     $newUserForm.appendTo($mainDiv);
-    $("#email").keypress(function(event){//return press submits
-        if(event.key == "Enter"){
+    $("#email").keypress(function (event) {//return press submits
+        if (event.key == "Enter") {
             insertNewUser();
-        }        
+        }
     })
     $("#userSubmit").click(insertNewUser);//submit button click event calls function to add user
 }
@@ -261,7 +295,7 @@ async function insertNewUser() {
         },
         body: JSON.stringify({ name: `${name}`, password: `${pword}`, email: `${email}` })
     });
-    let resData = await response.json();    
+    let resData = await response.json();
     let modal = document.getElementById("myModal");// Get the modal    
     let p = document.getElementById("modalText");
     p.innerHTML = 'User Created! Welcome to the Meal MVP   <button id="close">OK</button>'

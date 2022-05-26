@@ -2,7 +2,14 @@ p {
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 300;
 }
-
+button{
+    border:none;
+    box-shadow: 0px 0px 2px 2px rgb(0,0,0);
+}
+button:hover {
+    background-color: brown;
+    transition: 0.7s;
+}
 h1 {
     max-width: 98vw;
     font-family: sans-serif;
@@ -14,6 +21,7 @@ h1 {
 
 h3 {
     font-family: sans-serif;
+    font-size:xx-large;
     align-items: center;
     text-shadow: 3px 3px black;
     color: cornsilk;
@@ -29,82 +37,32 @@ h5 {
     margin: 0px 0px 0px 0px;
     padding: 0;
 }
-
-#newUser{
-    position: fixed;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    max-width: 150px;
-    width: 20vw;
-    height: 3vh;
-    top: 40vh;
-    left: 40vw;
-    right: 40vw;
-    bottom: 40vh;
-    background-color: cornsilk;
-    border-style: solid;
-    border-radius: 5px;
+#logout{
+    position:sticky;
+    top: 15px;    
+    z-index:100;
 }
 
-#noLogin{
-    position: fixed;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    max-width: 150px;
-    width: 20vw;
-    height: 3vh;
-    top: 40vh;
-    left: 40vw;
-    right: 40vw;
-    bottom: 40vh;
-    background-color: cornsilk;
-    border-style: solid;
-    border-radius: 5px;
-}
-#saveRecipe{    
-    position: fixed;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    max-width: 300px;
-    width: 35vw;
-    height: 3vh;
-    top: 40vh;
-    left: 40vw;
-    right: 40vw;
-    bottom: 40vh;
-    background-color: cornsilk;
-    border-style: solid;
-    border-radius: 5px;
-    
-}
-#remove{    
-    position: fixed;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    max-width: 300px;
-    width: 35vw;
-    height: 3vh;
-    top: 40vh;
-    left: 40vw;
-    right: 40vw;
-    bottom: 40vh;
-    background-color: cornsilk;
-    border-style: solid;
-    border-radius: 5px;
-    
-}
 .thumbnail {
     width: 100px;
     height: 100px;
 }
+
+.roundedContainerNoHover {
+    display: flex;
+    flex-direction: column;
+    background-color: cornsilk;
+    width: 97.5vw;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 6);
+    transition: 0.3s;
+    opacity: 100%;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 0;
+}
+
 
 .roundedContainer {
     display: flex;
@@ -119,6 +77,11 @@ h5 {
     border-style: solid;
     border-radius: 5px;
     padding: 0;
+}
+
+.roundedContainer:hover {
+    opacity: 100;
+    box-shadow: 0 12px 30px 0 rgba(0, 0, 0, 9);
 }
 
 .leftroundedContainer {
@@ -155,11 +118,6 @@ h5 {
     align-items: flex-start;
     justify-content: flex-start;
     width: 50vw;
-}
-
-.roundedContainer:hover {
-    opacity: 100;
-    box-shadow: 0 12px 30px 0 rgba(0, 0, 0, 9);
 }
 
 .centerDiv {
@@ -201,10 +159,35 @@ div {
     padding: 0;
 }
 
-.mainDivBlur{
-    filter: blur(2px);
-}
-
 #email {
     width: 12.5rem;
 }
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  }
+  
+  /* Modal Content/Box */
+  .modal-content {
+    background-color: cornsilk;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;   
+    border-style: solid;
+    border-radius: 5px;
+    width: 35vw;
+    height: 3vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  

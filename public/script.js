@@ -1,24 +1,30 @@
-const server = "https://salty-basin-23693.herokuapp.com";
+const server = "http://localhost:3000"; //https://salty-basin-23693.herokuapp.com"; //must change this value at deployment
 let user = {};
 
 //called on index page load, or when a user logs out
 function loadFrontPage() {
+    user = {};
     const $mainDiv = $("#mainDiv");
     $mainDiv.empty();
     //build HTML for front page content
     const $frontPageContent = $(`
         <div class="centerDiv"><H1>Welcome to Meal MVP</H1></div>
-        <div class="roundedContainer">
+        <div class="roundedContainerNoHover">
         <div><p>Username:<input id="username"></p></div>
         <div><p>Password:<input id="pword"></p></div>
-        <div><button id="login" type="button">Login</button></div>
+        <div><button id="login" type="submit">Login</button></div>
         <div><p id="nUser">New Users</p></div></div>
         `);
     $frontPageContent.appendTo($mainDiv);
     $("#login").click(loadRecipePage);
+    $("#pword").keypress(function(event){
+        if(event.key == "Enter"){
+            loadRecipePage();
+        }        
+    })
     $("#nUser").click(newUserFormLoad);
 }
-loadFrontPage();
+loadFrontPage();//initialize login page
 
 //called when user clicks login button
 async function loadRecipePage() {
@@ -37,17 +43,24 @@ async function loadRecipePage() {
     console.log(user);
     const $mainDiv = $("#mainDiv");
     $mainDiv.empty();
-    if (user.validated) {
+    if (user.validated) {//correct username and password
         //build HTML for top of recipe/search page
         const $recipePageContent = $(`
+            <div id="logout"><button>logout</button></div>
             <div class="centerDiv"><H3>${user.name}'s favorite Meals</H3></div>
-            <div class="roundedContainer">
+            <div class="roundedContainerNoHover">
             <div><p>Recipe Search:<input id="recipeSearch">
-            <button id="search" type="button">Search</button></p></div>
-        `);
-        $recipePageContent.appendTo($mainDiv);
+            <button id="search" type="button">Search</button></p></div>            
+        `);        
+        $recipePageContent.appendTo($mainDiv);//append HTML to the main div
+        $('#logout').click(loadFrontPage);//listener
         let $search = $("#search");
-        $search.click(function () {
+        $('#recipeSearch').keypress(function(event){//listener for enter press
+            if(event.key == "Enter"){
+                loadSearchResults($("#recipeSearch").val());
+            }        
+        })
+        $search.click(function () {//listener for search button click
             loadSearchResults($("#recipeSearch").val());
         });
         //builds the list of recipes that the user has added as favorites and appends to main div
@@ -62,21 +75,21 @@ async function loadRecipePage() {
             </div>
             `);
             $appendDiv.appendTo($mainDiv);//append rounded container div with recipe info to the main div
-            $(`#${currentFavorite.meal_id}`).click(removeFav);
+            $(`#${currentFavorite.meal_id}`).click(removeFav);//listener for favorite meal div click event calls function
         }
     } else {//if the user came back as not validated sends back to front page
-        const $appendDialog = $(`
-            <div id="noLogin" role="dialog" aria-modal="true">incorrect login!
-            <button id="close">OK</button>    
-            </div>
-            `);
-        $appendDialog.appendTo($mainDiv)
-        $('#close').click(function () {            
-            loadFrontPage();
+        let modal = document.getElementById("myModal");// Get the modal
+        let p = document.getElementById("modalText");//get the paragraph inside the modal
+        p.innerHTML = 'Incorrect Login   <button id="close">OK</button>'//insert HTML in the paragraph for this message event
+        modal.style.display = "block";//open the modal
+        $('#close').click(function () {//when ok is clicked empty the modal and stop displaying
+            p.innerHTML = ""
+            modal.style.display = "none";
+            loadFrontPage();           //re-load the login page
         })
     }
 }
-
+//function returns a user object that has a favorites list and a validation boolean
 async function checkUser(n, p) {
     let response = await fetch(`${server}/user`, {
         method: "POST",
@@ -95,26 +108,33 @@ async function loadSearchResults(str) {
     //calls to edam api through our api server loads the results into the Main Div after clearing
     const $mainDiv = $("#mainDiv");
     const $searchPageContent = $(`
+        <div id="logout"><button>logout</button></div>
         <div class="centerDiv"><H3>${user.name} search results</H3></div>
-        <div class="roundedContainer">
+        <div class="roundedContainerNoHover">
         <div><p>Recipe Search:<input id="recipeSearch">
         <button id="search" type="button">Search</button>
         <button id="favorites" type="button">Return to Favorites</button></p>
         </div>
         `);
-    $mainDiv.empty();
+    $mainDiv.empty();//clear previous content to load fresh content
     $searchPageContent.appendTo($mainDiv);
+    $('#logout').click(loadFrontPage);//click event for logout
+    $('#recipeSearch').keypress(function(event){//search when return is pressed
+        if(event.key == "Enter"){
+            loadSearchResults($("#recipeSearch").val());
+        }        
+    })
     let $favorites = $("#favorites");
-    $favorites.click(function () {
-        loadRecipePage();
+    $favorites.click(function () {//click event for return to favorites button
+        loadRecipePage();           //re-loads users favorites page
     });
     let $search = $("#search");
-    $search.click(function () {
+    $search.click(function () {//click event for search button
         loadSearchResults($("#recipeSearch").val());
     });
-    let data = await getSearchData(str)
+    let data = await getSearchData(str);
     //console.log(data);
-    for (let i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {//fills main div with recipes based on returned search data
         let currentMeal = data[i];//get current favorite recipe object
         const $appendDiv = $(`
         <div class="leftroundedContainer" id="${i}">
@@ -123,10 +143,10 @@ async function loadSearchResults(str) {
         <p id="${i}ingredient_list">${currentMeal.ingredient_list}</p></div>
         </div>`);
         $appendDiv.appendTo($mainDiv);//append rounded container div with recipe info to the main div
-        $(`#${i}`).click(saveFav);//add click event listener to rounded container div
+        $(`#${i}`).click(saveFav);//add click event listener to rounded container to save the recipe
     }
 }
-
+//called by load searc results function returns data from external API edamam
 async function getSearchData(str) {
     let response = await fetch(`${server}/search/${str}`, {
         method: "GET",
@@ -139,55 +159,50 @@ async function getSearchData(str) {
     return data;
 }
 //prompt user yes no, save to database if yes
-async function saveFav(ev) {
-    //save data to database
-    const $mainDiv = $('#mainDiv');
-    const $appendDialog = $(`
-    <div id="saveRecipe" role="dialog" aria-modal="true">Save this recipe to favorites?
-    <button id="save">Yes</button>
-    <button id="close">No</button>
-    </div>`);
-    $appendDialog.appendTo($mainDiv)
+async function saveFav(ev) {    
+    let meal_id = ev.currentTarget.id;
+    let modal = document.getElementById("myModal");// Get the modal
+    let p = document.getElementById("modalText"); //Get the paragraph for content inside the modal
+    p.innerHTML = 'Save this recipe to favorites?<button id="save">Yes</button><button id="close">No</button>'
+    modal.style.display = "block";//open the modal
     $yesBtn = $('#save');
     $noBtn = $('#close');
-    $yesBtn.click(function () {
-        let id = ev.currentTarget.id;
-        console.log(id);
-        //let $divContainer = $(`#${id}`);
+    $yesBtn.click(function () {//if yes button is clicked 
+        let id = ev.currentTarget.id;        
         let nameH = document.getElementById(`${id}name`); //get recipe name tag
         let imgTag = document.getElementById(`${id}image`); //get recipe image tag
         let ingredientsP = document.getElementById(`${id}ingredient_list`); //get recipe ingredients tag
         let name = nameH.textContent; //get textcontent from recipe name
         let image_url = imgTag.src; //get src of image tag
-        let ingredient_list = ingredientsP.innerHTML; //get textcontent from ingredients tag
-        console.log(`name:${name} |image_url:${image_url} |ingredient_list:${ingredient_list}`);
-        if (storeFavorite(name, image_url, ingredient_list)) { //pass the values into an async function to stor in database                       
-            $('#saveRecipe').remove();
+        let ingredient_list = ingredientsP.innerHTML; //get textcontent from ingredients tag        
+        if (storeFavorite(name, image_url, ingredient_list)) { //pass the values into an async function to store in database
+            p.innerHTML = ""
+            modal.style.display = "none";
         }
     })
-    $noBtn.click(function () {
-        $('#saveRecipe').remove();
+    $noBtn.click(function () {//if no button is clicked close the modal and empty the text content
+        p.innerHTML = ""
+        modal.style.display = "none";
     })
 }
-
-async function removeFav(ev){
+//prompts if user wants to and deletes a favorite
+async function removeFav(ev) {
     let meal_id = ev.currentTarget.id;
-    $mainDiv = $('#mainDiv');
-    const $appendDialog = $(`
-        <div id="remove" role="dialog" aria-modal="true">remove recipe from favorites?
-        <button id="Delete">Yes</button>
-        <button id="close">No</button>    
-        </div>
-    `);
-    $appendDialog.appendTo($mainDiv)
-    $('#Delete').click(function() {
+    let modal = document.getElementById("myModal");// Get the modal    
+    let p = document.getElementById("modalText");
+    p.innerHTML = 'remove recipe from favorites?    <button id="Delete">Yes</button><button id="close">No</button>'
+    modal.style.display = "block";//open the modal
+    $('#Delete').click(function () {//yes button clicked clear and close the modal and delete the favorite
+        p.innerHTML = ""
+        modal.style.display = "none";
         deleteFavorite(meal_id);//call async function to delete record
-    })        
-    $('#close').click(function () {            
-        $('#remove').remove();//close the popup
-    })                    
+    })
+    $('#close').click(function () {//if user clicks no clear and close the modal
+        p.innerHTML = ""
+        modal.style.display = "none";
+    })
 }
-
+//async function to send the favorite recipe data to the api server
 async function storeFavorite(n, img, ing) {
     let response = await fetch(`${server}/favorite`, {
         method: "POST",
@@ -199,14 +214,14 @@ async function storeFavorite(n, img, ing) {
     let data = await response.json();
     return true;
 }
-
-async function deleteFavorite(meal_id){
+//async function to send a delete query with meal_id to the api server
+async function deleteFavorite(meal_id) {
     let response = await fetch(`${server}/favorite`, {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ meal_id: `${meal_id}`})
+        body: JSON.stringify({ meal_id: `${meal_id}` })
     });
     let data = await response.json();
     loadRecipePage();
@@ -219,17 +234,22 @@ function newUserFormLoad() {
     $mainDiv.empty();
     const $newUserForm = $(`
     <div class="centerDiv"><H3>Please enter your information</H3></div>
-    <div class="roundedContainer">
+    <div class="roundedContainerNoHover">
     <div class="spacer"></div><div><p>Username:<input id="username"></p></div>
     <div><p>Password:<input id="pword"></p></div>
     <div><p>Email:<input id="email"></p></div>
     <div><button id="userSubmit" type="button">Submit</button></div>
     <div class="spacer"></div></div>`);
     $newUserForm.appendTo($mainDiv);
-    $("#userSubmit").click(insertNewUser);
+    $("#email").keypress(function(event){//return press submits
+        if(event.key == "Enter"){
+            insertNewUser();
+        }        
+    })
+    $("#userSubmit").click(insertNewUser);//submit button click event calls function to add user
 }
 
-//need to send body data...not sure how!!! in progress
+//gets the username password and email from the form and sends it to the database
 async function insertNewUser() {
     let name = $('#username').val();
     let pword = $('#pword').val();
@@ -241,16 +261,14 @@ async function insertNewUser() {
         },
         body: JSON.stringify({ name: `${name}`, password: `${pword}`, email: `${email}` })
     });
-    let resData = await response.json();
-    // console.log(resData);
-    const $mainDiv = $('#mainDiv');
-    const $appendDialog = $(`
-    <div id="newUser" role="dialog" aria-modal="true">User Created!
-    <button id="close">OK</button>    
-    </div>
-    `);
-    $appendDialog.appendTo($mainDiv)
-    $('#close').click(function () {        
-        loadFrontPage();
+    let resData = await response.json();    
+    let modal = document.getElementById("myModal");// Get the modal    
+    let p = document.getElementById("modalText");
+    p.innerHTML = 'User Created! Welcome to the Meal MVP   <button id="close">OK</button>'
+    modal.style.display = "block";//open the modal    
+    $('#close').click(function () {//ok button clicked, clear the modal and load the login page
+        p.innerHTML = ""
+        modal.style.display = "none";
+        loadFrontPage()
     })
 }

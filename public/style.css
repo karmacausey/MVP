@@ -40,6 +40,12 @@ h5 {
     margin: 0px 0px 0px 0px;
     padding: 0;
 }
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
 #logout{
     position:sticky;
     top: 15px;    
@@ -157,7 +163,8 @@ div {
 
 #mainDiv {
     background-image: url('background.jpg');
-    background-repeat: repeat;
+    /* background-repeat: repeat; */
+    background-size: cover;
     max-width: 100vw;
     display: flex;
     flex-direction: column;
